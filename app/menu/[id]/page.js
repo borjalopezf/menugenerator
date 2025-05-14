@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function VistaMenu() {
   const { id } = useParams();
@@ -11,6 +12,12 @@ export default function VistaMenu() {
   const [secciones, setSecciones] = useState([]);
   const [seccionActiva, setSeccionActiva] = useState('');
   const seccionRefs = useRef({});
+
+  const getImagenUrl = (menuId, imagen) => {
+    if (!imagen) return '';
+    if (imagen.startsWith('http')) return imagen;
+    return `/imagenes/${menuId}/${imagen}`;
+  };
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -64,20 +71,22 @@ export default function VistaMenu() {
     <main className="bg-gray-50 min-h-screen px-4 pb-20">
       {/* Barra sticky */}
       <nav className="sticky top-0 bg-white border-b border-gray-200 z-10 shadow-sm w-full">
-        <div className="w-full px-4 py-3 flex gap-4 overflow-x-auto">
-            {secciones.map((sec) => (
+        <div className="w-full px-4 py-3 flex gap-4 overflow-x-auto scrollbar-hide">
+          {secciones.map((sec) => (
             <button
-                key={sec}
-                onClick={() => scrollToSection(sec)}
-                className={`text-sm whitespace-nowrap transition ${
-                seccionActiva === sec ? 'text-black font-semibold' : 'text-gray-400'
-                }`}
+              key={sec}
+              onClick={() => scrollToSection(sec)}
+              className={`text-sm whitespace-nowrap transition-all duration-300 ease-in-out px-2 py-1 rounded-md
+                ${seccionActiva === sec
+                  ? 'text-[#1E3A8A] font-semibold bg-blue-50'
+                  : 'text-gray-400 hover:text-gray-600'}
+              `}
             >
-                {sec}
+              {sec}
             </button>
-            ))}
+          ))}
         </div>
-        </nav>
+      </nav>
 
       {/* Secciones */}
       <div className="max-w-5xl mx-auto mt-10 space-y-16">
@@ -92,39 +101,41 @@ export default function VistaMenu() {
               {menu.productos
                 .filter((p) => (p.seccion || 'Sin sección') === sec)
                 .map((p, i) => (
-                  <div
+                  <motion.div
                     key={i}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4 }}
                     className="bg-white rounded-xl shadow p-4 flex flex-col"
                   >
                     {p.imagen && (
                       <img
-                        src={p.imagen}
+                        src={getImagenUrl(id, p.imagen)}
                         alt={p.nombre}
                         className="mb-3 rounded object-cover h-40 w-full"
                       />
                     )}
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">
-                      {p.nombre}
-                    </h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{p.nombre}</h3>
                     {p.descripcion && (
-                      <p className="text-sm text-gray-600 mb-1">
-                        {p.descripcion}
-                      </p>
+                      <p className="text-sm text-gray-600 mb-1">{p.descripcion}</p>
                     )}
                     {p.alergenos && (
-                      <p className="text-sm text-gray-400 mb-1">
-                        Alérgenos: {p.alergenos}
-                      </p>
+                      <p className="text-sm text-gray-400 mb-1">Alérgenos: {p.alergenos}</p>
                     )}
-                    <p className="text-lg font-bold text-gray-900 mt-auto">
-                      {p.precio}
-                    </p>
-                  </div>
+                    <p className="text-lg font-bold text-gray-900 mt-auto">{p.precio}</p>
+                  </motion.div>
                 ))}
             </div>
           </section>
         ))}
       </div>
-    </main>
+    <footer className="bg-[#1E3A8A] text-white text-sm text-center py-4 mt-16">
+  <a href="/" className="hover:underline">
+    Hecho con MenuGenerator
+  </a>
+</footer>
+
+</main>
   );
 }

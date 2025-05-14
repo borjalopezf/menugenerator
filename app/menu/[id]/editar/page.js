@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { db, auth } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { db, auth, storage } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useParams, useRouter } from 'next/navigation';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { toast } from 'react-hot-toast';
 
 export default function VistaMenuEditable() {
   const { id } = useParams();
@@ -12,9 +14,8 @@ export default function VistaMenuEditable() {
   const [menu, setMenu] = useState(null);
   const [secciones, setSecciones] = useState([]);
   const [usuario, setUsuario] = useState(null);
-  const [modalIndex, setModalIndex] = useState(null); // producto en edición
+  const [modalIndex, setModalIndex] = useState(null);
   const [productosEditados, setProductosEditados] = useState([]);
-
   const seccionRefs = useRef({});
 
   useEffect(() => {
@@ -45,17 +46,64 @@ export default function VistaMenuEditable() {
     setProductosEditados(copia);
   };
 
-  const handleImagen = (e, index) => {
-    const file = e.target.files[0];
+  const handleImagen = async (e, index) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => handleChange(index, 'imagen', reader.result);
-    reader.readAsDataURL(file);
+  
+    console.log('📂 Archivo seleccionado:', file.name, file.size);
+  
+    try {
+      const fileName = `${Date.now()}-${file.name}`;
+      const storagePath = `menu-images/${id}/${fileName}`;
+      const imageRef = ref(storage, storagePath);
+  
+      console.log('📤 Subiendo a:', storagePath);
+  
+      const snapshot = await uploadBytes(imageRef, file);
+      console.log('✅ Subida completada');
+  
+      const url = await getDownloadURL(snapshot.ref);
+      console.log('🔗 URL pública:', url);
+  
+      handleChange(index, 'imagen', url);
+      toast.success('Imagen subida correctamente');
+    } catch (err) {
+      console.error('❌ Error al subir imagen:', err);
+      toast.error('No se pudo subir la imagen.');
+    }
+  };
+  
+
+  const handleGuardar = async () => {
+    try {
+      const docRef = doc(db, 'menus', id);
+      await updateDoc(docRef, { productos: productosEditados });
+      toast.success('Cambios guardados correctamente en Firestore.');
+    } catch (err) {
+      console.error('Error al guardar en Firestore:', err);
+      toast.error('Hubo un error al guardar los cambios.');
+    }
+  };
+
+  const handleAddProducto = () => {
+    setProductosEditados([
+      ...productosEditados,
+      { nombre: '', descripcion: '', precio: '', seccion: '', alergenos: '', etiqueta: '', imagen: '' },
+    ]);
+  };
+
+  const handleDeleteProducto = (index) => {
+    if (!confirm('¿Seguro que quieres eliminar este producto?')) return;
+    const copia = [...productosEditados];
+    copia.splice(index, 1);
+    setProductosEditados(copia);
   };
 
   if (!menu || !usuario) {
     return <p className="text-center mt-20 text-gray-500">Cargando menú...</p>;
   }
+
+  const seccionesActivas = [...new Set(productosEditados.map((p) => p.seccion || 'Sin sección'))];
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10">
@@ -64,7 +112,7 @@ export default function VistaMenuEditable() {
           <h1 className="text-2xl font-bold text-gray-800">Editar menú</h1>
           <div className="space-x-4">
             <button
-              onClick={() => alert('Cambios guardados en estado local. (Aquí irá la subida a Firestore)')}
+              onClick={handleGuardar}
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
             >
               Guardar cambios
@@ -78,7 +126,16 @@ export default function VistaMenuEditable() {
           </div>
         </div>
 
-        {secciones.map((sec) => (
+        <div className="text-right">
+          <button
+            onClick={handleAddProducto}
+            className="bg-[#1E3A8A] text-white px-4 py-2 rounded hover:bg-blue-800 transition"
+          >
+            Añadir producto
+          </button>
+        </div>
+
+        {seccionesActivas.map((sec) => (
           <section key={sec} className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-700">{sec}</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -100,14 +157,21 @@ export default function VistaMenuEditable() {
                     <p className="text-sm text-gray-400 mb-1">Etiqueta: {p.etiqueta}</p>
                     <p className="text-lg font-bold text-gray-900 mt-auto">{p.precio}</p>
 
-                    {/* Botón de edición centrado en hover */}
                     <div className="absolute inset-0 bg-white/60 hidden group-hover:flex items-center justify-center rounded-xl transition">
-                      <button
-                        onClick={() => setModalIndex(p.index)}
-                        className="text-sm text-[#1E3A8A] bg-white border border-gray-300 px-4 py-2 rounded shadow hover:bg-gray-100 transition"
-                      >
-                        Editar
-                      </button>
+                      <div className="space-x-2">
+                        <button
+                          onClick={() => setModalIndex(p.index)}
+                          className="text-sm text-[#1E3A8A] bg-white border border-gray-300 px-4 py-2 rounded shadow hover:bg-gray-100 transition"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProducto(p.index)}
+                          className="text-sm text-red-600 bg-white border border-gray-300 px-4 py-2 rounded shadow hover:bg-red-50 transition"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -116,7 +180,6 @@ export default function VistaMenuEditable() {
         ))}
       </div>
 
-      {/* Modal */}
       {modalIndex !== null && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-lg max-w-xl w-full p-6">
@@ -136,11 +199,7 @@ export default function VistaMenuEditable() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">Imagen</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImagen(e, modalIndex)}
-                />
+                <input type="file" accept="image/*" onChange={(e) => handleImagen(e, modalIndex)} />
                 {productosEditados[modalIndex].imagen && (
                   <img
                     src={productosEditados[modalIndex].imagen}

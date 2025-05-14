@@ -1,5 +1,6 @@
 import './globals.css';
 import ClientLayoutWrapper from '@/components/ClientLayoutWrapper';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
   title: 'MenuGenerator',
@@ -10,7 +11,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body>
-        <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+        <ClientLayoutWrapper>
+          <Toaster position="top-center" />
+          {children}
+        </ClientLayoutWrapper>
       </body>
     </html>
   );
