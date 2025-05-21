@@ -27,7 +27,7 @@ export default function PlanesPage() {
         </p>
 
         <div className="border-t border-b py-6 mb-6">
-          <h2 className="text-4xl font-extrabold text-[#1E3A8A] mb-2">10 €/mes</h2>
+          <h2 className="text-4xl font-extrabold text-[#1E3A8A] mb-2">15 €/mes</h2>
           <p className="text-gray-700 mb-4 font-medium">Plan Profesional</p>
           <ul className="text-left text-gray-700 mb-4 space-y-2">
             <li>✅ 1 carta digital publicada</li>
@@ -39,9 +39,14 @@ export default function PlanesPage() {
           </ul>
         </div>
 
-        <button className="bg-[#1E3A8A] text-white px-6 py-3 rounded hover:bg-blue-800 transition text-lg w-full">
+        <a
+          href="https://buy.stripe.com/9B628rgTd8pp8YZdl78Ra00"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-[#1E3A8A] text-white px-6 py-3 rounded hover:bg-blue-800 transition text-lg w-full block text-center"
+        >
           Suscribirse ahora
-        </button>
+        </a>
 
         <p className="mt-6 text-sm text-gray-500">
           ¿Tienes varios locales o necesitas más cartas?{' '}

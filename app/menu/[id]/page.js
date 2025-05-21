@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 
@@ -11,6 +11,8 @@ export default function VistaMenu() {
   const [menu, setMenu] = useState(null);
   const [secciones, setSecciones] = useState([]);
   const [seccionActiva, setSeccionActiva] = useState('');
+  const [nombreMenu, setNombreMenu] = useState('');
+  const [editandoNombre, setEditandoNombre] = useState(false);
   const seccionRefs = useRef({});
 
   const getImagenUrl = (menuId, imagen) => {
@@ -26,6 +28,7 @@ export default function VistaMenu() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setMenu(data);
+        setNombreMenu(data.nombre || '');
 
         const nombresSecciones = [
           ...new Set(data.productos.map((p) => p.seccion || 'Sin sección')),
@@ -63,12 +66,49 @@ export default function VistaMenu() {
     }
   };
 
+  const guardarNombreMenu = async () => {
+    if (!nombreMenu.trim()) return;
+    await updateDoc(doc(db, 'menus', id), { nombre: nombreMenu.trim() });
+    setEditandoNombre(false);
+  };
+
   if (!menu) {
     return <p className="text-center mt-20 text-gray-500">Cargando menú...</p>;
   }
 
   return (
     <main className="bg-gray-50 min-h-screen px-4 pb-20">
+      <div className="max-w-5xl mx-auto py-6">
+        {editandoNombre ? (
+          <div className="flex items-center gap-2 mb-6">
+            <input
+              value={nombreMenu}
+              onChange={(e) => setNombreMenu(e.target.value)}
+              className="text-2xl font-bold px-3 py-1 border rounded w-full"
+              placeholder="Nombre del menú"
+            />
+            <button
+              onClick={guardarNombreMenu}
+              className="px-4 py-2 bg-[#1E3A8A] text-white rounded hover:bg-blue-800 transition"
+            >
+              Guardar
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-gray-800">
+              {nombreMenu || 'Menú sin nombre'}
+            </h1>
+            <button
+              onClick={() => setEditandoNombre(true)}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Cambiar nombre
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Barra sticky */}
       <nav className="sticky top-0 bg-white border-b border-gray-200 z-10 shadow-sm w-full">
         <div className="w-full px-4 py-3 flex gap-4 overflow-x-auto scrollbar-hide">
@@ -130,12 +170,12 @@ export default function VistaMenu() {
           </section>
         ))}
       </div>
-    <footer className="bg-[#1E3A8A] text-white text-sm text-center py-4 mt-16">
-  <a href="/" className="hover:underline">
-    Hecho con MenuGenerator
-  </a>
-</footer>
 
-</main>
+      <footer className="bg-[#1E3A8A] text-white text-sm text-center py-4 mt-16">
+        <link href="/" className="hover:underline">
+          Hecho con MenuGenerator
+        </link>
+      </footer>
+    </main>
   );
 }

@@ -45,6 +45,9 @@ export default function MiPerfil() {
     });
   };
 
+  const enlacePagoStripe = 'https://buy.stripe.com/9B628rgTd8pp8YZdl78Ra00';
+  const enlaceGestionStripe = 'https://billing.stripe.com/p/login/9B628rgTd8pp8YZdl78Ra00';
+
   return (
     <main className="min-h-screen px-6 py-12 bg-gray-50 text-gray-900">
       <div className="max-w-6xl mx-auto space-y-12">
@@ -58,6 +61,27 @@ export default function MiPerfil() {
           >
             Cerrar sesión
           </button>
+
+          {/* Botones de suscripción */}
+          <div className="mt-6 space-y-3">
+            <a
+              href={enlacePagoStripe}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-[#1E3A8A] text-white px-4 py-2 rounded hover:bg-blue-800 transition"
+            >
+              Activar plan profesional
+            </a>
+
+            <a
+              href={enlaceGestionStripe}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center border border-[#1E3A8A] text-[#1E3A8A] px-4 py-2 rounded hover:bg-gray-100 transition"
+            >
+              Gestionar suscripción
+            </a>
+          </div>
         </div>
 
         {/* Menús */}
@@ -85,7 +109,7 @@ export default function MiPerfil() {
                 >
                   <div>
                     <h3 className="text-lg font-bold text-gray-800 mb-1 truncate">
-                      Menú {menu.id.slice(0, 8)}
+                      {menu.nombre || `Menú ${menu.id.slice(0, 8)}`}
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">
                       Creado el {formatDate(menu.creadoEn)}
@@ -93,25 +117,24 @@ export default function MiPerfil() {
                   </div>
                   <div className="flex gap-4 mt-auto">
                     <button
-                        onClick={() => router.push(`/menu/${menu.id}`)}
-                        className="text-blue-600 hover:underline text-sm"
+                      onClick={() => router.push(`/menu/${menu.id}`)}
+                      className="text-blue-600 hover:underline text-sm"
                     >
-                        Ver
+                      Ver
                     </button>
                     <button
-                        onClick={() => router.push(`/menu/${menu.id}/editar`)}
-                        className="text-yellow-600 hover:underline text-sm"
+                      onClick={() => router.push(`/menu/${menu.id}/editar`)}
+                      className="text-yellow-600 hover:underline text-sm"
                     >
-                        Editar
+                      Editar
                     </button>
                     <button
-                        onClick={() => handleDelete(menu.id)}
-                        className="text-red-600 hover:underline text-sm"
+                      onClick={() => handleDelete(menu.id)}
+                      className="text-red-600 hover:underline text-sm"
                     >
-                        Eliminar
+                      Eliminar
                     </button>
-                    </div>
-
+                  </div>
                 </div>
               ))}
             </div>
